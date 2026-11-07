@@ -1,0 +1,25 @@
+:root {
+  --fondo-principal: #100f1b;
+  --fondo-tarjetas: #1d1a30;
+  --violeta: #7542e8;
+  --lila: #a78bfa;
+  --violeta-claro: #c4b5fd;
+  --texto: #f5f3ff;
+  --texto-secundario: #a7a1bd;
+  --positivo: #39c995;
+  --negativo: #f05b75;
+  --neutro: #6485ff;
+  --mixto: #f5a34b;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--fondo-principal);
+  color: var(--texto);
+  font-family: system-ui, sans-serif;
+}
