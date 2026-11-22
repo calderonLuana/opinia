@@ -1,45 +1,60 @@
-export async function analizarOpiniones(datos) {
+
+const MENSAJE_SIN_CONEXION =
+  'No se pudo conectar con el servidor. Verificá que el backend esté en ejecución.';
+
+async function enviarJSON(ruta, datos, { tiempoMaximo, mensajeTiempo }) {
   let respuesta;
 
   try {
-    respuesta = await fetch('/api/analizar', {
+    respuesta = await fetch(ruta, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(datos),
-      signal: AbortSignal.timeout(90000),
+      signal: AbortSignal.timeout(tiempoMaximo),
     });
   } catch (error) {
-  if (error.name === 'TimeoutError') {
-    throw new Error(
-      'El análisis está tardando demasiado. Intentá de nuevo con menos opiniones.',
-      { cause: error }
-    );
+    if (error.name === 'TimeoutError') {
+      throw new Error(mensajeTiempo, { cause: error });
+    }
+    throw new Error(MENSAJE_SIN_CONEXION, { cause: error });
   }
-
-  throw new Error(
-    'No se pudo conectar con el servidor. Verificá que el backend esté en ejecución.',
-    { cause: error }
-  );
-}
 
   let cuerpo = null;
   try {
     cuerpo = await respuesta.json();
- } catch (error) {
-  // La respuesta no trae JSON (por ejemplo, el backend está caído)
-  console.error('No se pudo interpretar la respuesta del servidor:', error);
-}
+  } catch {
+    // La respuesta no trae JSON (por ejemplo, el backend está caído)
+  }
 
   if (!respuesta.ok) {
     if (!cuerpo) {
-      throw new Error(
-        'No se pudo conectar con el servidor. Verificá que el backend esté en ejecución.',
-      );
+      throw new Error(MENSAJE_SIN_CONEXION);
     }
     throw new Error(
-      cuerpo.detalles?.join(' ') || cuerpo.error || 'No se pudo completar el análisis.',
+      cuerpo.detalles?.join(' ') || cuerpo.error || 'No se pudo completar la solicitud.',
     );
   }
 
+  return cuerpo;
+}
+
+export async function analizarOpiniones(datos) {
+  const cuerpo = await enviarJSON('/api/analizar', datos, {
+    tiempoMaximo: 90000,
+    mensajeTiempo:
+      'El análisis está tardando demasiado. Intentá de nuevo con menos opiniones.',
+  });
   return cuerpo.resultado;
+}
+
+export async function importarDesdeSheets(enlace) {
+  const cuerpo = await enviarJSON(
+    '/api/importar-sheets',
+    { enlace },
+    {
+      tiempoMaximo: 30000,
+      mensajeTiempo: 'Google Sheets tardó demasiado en responder. Intentá de nuevo.',
+    },
+  );
+  return cuerpo.csv;
 }

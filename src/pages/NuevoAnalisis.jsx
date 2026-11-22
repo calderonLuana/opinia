@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Plus,
   CalendarDays,
@@ -6,10 +7,11 @@ import {
   Trash2,
   Play,
   LoaderCircle,
-  CircleCheck,
   TriangleAlert,
 } from 'lucide-react';
 import { analizarOpiniones } from '../services/api';
+import { useAnalisis } from '../hooks/useAnalisis';
+import ImportarArchivo from '../components/ImportarArchivo';
 
 const MAX_CARACTERES = 20000;
 
@@ -29,10 +31,14 @@ function separarOpiniones(texto) {
 }
 
 function NuevoAnalisis() {
+  const navigate = useNavigate();
+  const { agregarAnalisis } = useAnalisis();
   const [form, setForm] = useState(estadoInicial);
   const [estado, setEstado] = useState('inactivo');
   const [error, setError] = useState('');
-  const [resultado, setResultado] = useState(null);
+  const [modo, setModo] = useState('escribir');
+  const [opinionesArchivo, setOpinionesArchivo] = useState([]);
+  const [claveArchivo, setClaveArchivo] = useState(0);
 
   const cargando = estado === 'cargando';
   const cantidadOpiniones = separarOpiniones(form.opiniones).length;
@@ -46,7 +52,8 @@ function NuevoAnalisis() {
     setForm(estadoInicial);
     setEstado('inactivo');
     setError('');
-    setResultado(null);
+    setOpinionesArchivo([]);
+    setClaveArchivo((n) => n + 1);
   };
 
   const handleSubmit = async (e) => {
@@ -55,7 +62,6 @@ function NuevoAnalisis() {
 
     setEstado('cargando');
     setError('');
-    setResultado(null);
 
     try {
       const datos = await analizarOpiniones({
@@ -63,20 +69,16 @@ function NuevoAnalisis() {
         tipo: form.tipo,
         fecha: form.fecha,
         institucion: form.institucion,
-        opiniones: separarOpiniones(form.opiniones),
+        opiniones: modo === 'archivo' ? opinionesArchivo : separarOpiniones(form.opiniones),
       });
 
-      // Provisorio: en la Etapa 3 el resultado se envía al módulo Resultados
-      console.log('Resultado del análisis:', datos);
-      setResultado(datos);
-      setEstado('exito');
+      const guardado = await agregarAnalisis(datos);
+      navigate(`/resultados/${guardado.id}`);
     } catch (err) {
       setError(err.message);
       setEstado('error');
     }
   };
-
-  const sentimientos = resultado?.resumen.sentimientos;
 
   return (
     <div className="page">
@@ -159,26 +161,58 @@ function NuevoAnalisis() {
             </div>
           </div>
 
-          <div className="field">
-            <label htmlFor="opiniones">
-              Opiniones de los asistentes <span className="required">*</span>{' '}
-              <span className="optional">(una por línea)</span>
-            </label>
-            <textarea
-              id="opiniones"
-              name="opiniones"
-              rows={7}
-              maxLength={MAX_CARACTERES}
-              placeholder="Pegá o escribí las opiniones aquí..."
-              value={form.opiniones}
-              onChange={handleChange}
-              required
-            />
-            <span className="char-count">
-              {cantidadOpiniones} {cantidadOpiniones === 1 ? 'opinión' : 'opiniones'} ·{' '}
-              {form.opiniones.length} / {MAX_CARACTERES}
-            </span>
+          <div
+            className="modo-opiniones"
+            role="group"
+            aria-label="Forma de cargar las opiniones"
+          >
+            <button
+              type="button"
+              className={modo === 'escribir' ? 'modo-btn activo' : 'modo-btn'}
+              aria-pressed={modo === 'escribir'}
+              onClick={() => setModo('escribir')}
+            >
+              Escribir opiniones
+            </button>
+            <button
+              type="button"
+              className={modo === 'archivo' ? 'modo-btn activo' : 'modo-btn'}
+              aria-pressed={modo === 'archivo'}
+              onClick={() => setModo('archivo')}
+            >
+              Cargar archivo o enlace
+            </button>
           </div>
+
+          {modo === 'escribir' ? (
+            <div className="field">
+              <label htmlFor="opiniones">
+                Opiniones de los asistentes <span className="required">*</span>{' '}
+                <span className="optional">(una por línea)</span>
+              </label>
+              <textarea
+                id="opiniones"
+                name="opiniones"
+                rows={7}
+                maxLength={MAX_CARACTERES}
+                placeholder="Pegá o escribí las opiniones aquí..."
+                value={form.opiniones}
+                onChange={handleChange}
+                required
+              />
+              <span className="char-count">
+                {cantidadOpiniones} {cantidadOpiniones === 1 ? 'opinión' : 'opiniones'} ·{' '}
+                {form.opiniones.length} / {MAX_CARACTERES}
+              </span>
+            </div>
+          ) : (
+            <div className="field">
+              <span className="field-titulo">
+                Opiniones de los asistentes <span className="required">*</span>
+              </span>
+              <ImportarArchivo key={claveArchivo} onOpiniones={setOpinionesArchivo} />
+            </div>
+          )}
 
           {estado === 'error' && (
             <div className="aviso aviso-error" role="alert">
@@ -186,22 +220,6 @@ function NuevoAnalisis() {
               <div>
                 <strong>No se pudo completar el análisis</strong>
                 <span>{error}</span>
-              </div>
-            </div>
-          )}
-
-          {estado === 'exito' && sentimientos && (
-            <div className="aviso aviso-exito" role="status">
-              <CircleCheck size={18} />
-              <div>
-                <strong>Análisis completado</strong>
-                <span>
-                  {resultado.resumen.totalOpiniones} opiniones procesadas:{' '}
-                  {sentimientos.positivo.cantidad} positivas,{' '}
-                  {sentimientos.negativo.cantidad} negativas,{' '}
-                  {sentimientos.neutro.cantidad} neutras y {sentimientos.mixto.cantidad}{' '}
-                  mixtas.
-                </span>
               </div>
             </div>
           )}

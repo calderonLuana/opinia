@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { House, Plus, ChartColumn, History, Moon, Sparkles } from 'lucide-react';
+import { House, Plus, ChartColumn, History, Sparkles } from 'lucide-react';
 
 const links = [
   { to: '/', label: 'Dashboard', icon: House, end: true },
@@ -35,21 +35,6 @@ function Sidebar() {
           </NavLink>
         ))}
       </nav>
-
-      <div className="sidebar-footer">
-        <div className="sidebar-darkmode">
-          <Moon size={16} />
-          <span>Modo oscuro</span>
-          <div className="switch" />
-        </div>
-        <div className="sidebar-user">
-          <div className="avatar">JD</div>
-          <div>
-            <div className="sidebar-user-name">Juan Pérez</div>
-            <div className="sidebar-user-role">Organizador</div>
-          </div>
-        </div>
-      </div>
     </aside>
   );
 }

@@ -1,6 +1,6 @@
 const TIPOS_PERMITIDOS = ['Congreso', 'Conferencia', 'Jornada', 'Seminario', 'Otro'];
 const MAX_OPINIONES = 200;
-const MAX_LARGO_OPINION = 1000;
+const MAX_LARGO_OPINION = 2000;
 const MAX_LARGO_TEXTO = 150;
 
 function texto(valor) {

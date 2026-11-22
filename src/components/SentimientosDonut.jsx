@@ -1,14 +1,16 @@
+
 import { PieChart, Pie, Cell } from 'recharts';
 
 function SentimientosDonut({ data }) {
   const principal = data[0];
+  const visibles = data.filter((item) => item.value > 0);
 
   return (
     <div className="donut-wrap">
       <div className="donut">
         <PieChart width={170} height={170}>
           <Pie
-            data={data}
+            data={visibles}
             dataKey="value"
             innerRadius={54}
             outerRadius={80}
@@ -17,7 +19,7 @@ function SentimientosDonut({ data }) {
             endAngle={-270}
             stroke="none"
           >
-            {data.map((item) => (
+            {visibles.map((item) => (
               <Cell key={item.name} fill={item.color} />
             ))}
           </Pie>

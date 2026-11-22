@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import analizarRouter from './routes/analizar.js';
+import importarRouter from './routes/importar.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,6 +16,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/analizar', analizarRouter);
+app.use('/api/importar-sheets', importarRouter);
 
 // Rutas inexistentes
 app.use((req, res) => {

@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+
+import { Link, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   CalendarDays,
@@ -10,13 +11,66 @@ import {
   ChartColumn,
   Tag,
   Star,
+  Plus,
+  SearchX,
 } from 'lucide-react';
 import ChartCard from '../components/ChartCard';
 import SentimientosDonut from '../components/SentimientosDonut';
-import { sentimientos, resultadoEvento as ev } from '../data/mockData';
+import { useAnalisis } from '../hooks/useAnalisis';
+import {
+  datosSentimientos,
+  formatearFecha,
+  formatearTema,
+} from '../utils/resultados';
 
 function Resultados() {
-  const maxTema = Math.max(...ev.temas.map((t) => t.value));
+  const { id } = useParams();
+  const { analisis, obtenerAnalisis } = useAnalisis();
+
+  const actual = id ? obtenerAnalisis(id) : analisis[0];
+
+  if (!actual) {
+    return (
+      <div className="page">
+        <section className="estado-vacio">
+          <SearchX size={32} />
+          <h1>
+            {id ? 'No encontramos ese análisis' : 'Todavía no hay análisis'}
+          </h1>
+          <p>
+            {id
+              ? 'Puede que haya sido eliminado o que se haya guardado en otro navegador.'
+              : 'Cargá las opiniones de un evento para ver acá sus resultados.'}
+          </p>
+          <div className="estado-vacio-acciones">
+            <Link to="/nuevo-analisis" className="btn-primary">
+              <Plus size={16} />
+              Nuevo análisis
+            </Link>
+            {id && (
+              <Link to="/historial" className="btn-outline">
+                Ir al historial
+              </Link>
+            )}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  const {
+    evento,
+    resumen,
+    temasFrecuentes,
+    aspectosPositivos,
+    problemasDetectados,
+    recomendaciones,
+  } = actual;
+
+  const maxTema = Math.max(
+    ...temasFrecuentes.map((t) => t.porcentaje),
+    1,
+  );
 
   return (
     <div className="page">
@@ -25,7 +79,12 @@ function Resultados() {
           <ArrowLeft size={14} />
           Volver
         </Link>
-        <button type="button" className="btn-primary">
+        <button
+          type="button"
+          className="btn-primary"
+          disabled
+          title="Se activa cuando se integre Make"
+        >
           <Mail size={16} />
           Enviar informe
         </button>
@@ -36,10 +95,11 @@ function Resultados() {
           <Presentation size={30} />
         </div>
         <div className="event-info">
-          <h1>{ev.nombre}</h1>
+          <h1>{evento.nombre}</h1>
           <p className="event-meta">
             <CalendarDays size={14} />
-            {ev.fecha} · {ev.tipo}
+            {formatearFecha(evento.fecha)} · {evento.tipo}
+            {evento.institucion ? ` · ${evento.institucion}` : ''}
           </p>
           <p className="event-status">
             <CircleCheck size={14} />
@@ -47,54 +107,96 @@ function Resultados() {
           </p>
         </div>
         <div className="event-total">
-          <strong>{ev.opiniones.toLocaleString('es-AR')}</strong>
+          <strong>
+            {resumen.totalOpiniones.toLocaleString('es-AR')}
+          </strong>
           <span>Opiniones analizadas</span>
         </div>
       </section>
 
       <div className="results-grid">
         <ChartCard title="Sentimientos" icon={ChartColumn}>
-          <SentimientosDonut data={sentimientos} />
+          <SentimientosDonut
+            data={datosSentimientos(resumen.sentimientos)}
+          />
         </ChartCard>
 
         <ChartCard title="Temas frecuentes" icon={Tag}>
-          <ul className="tema-list">
-            {ev.temas.map((t) => (
-              <li
-                key={t.name}
-                className="tema-chip"
-                style={{ '--w': `${(t.value / maxTema) * 100}%` }}
-              >
-                <span>{t.name}</span>
-                <strong>{t.value}%</strong>
-              </li>
-            ))}
-          </ul>
+          {temasFrecuentes.length === 0 ? (
+            <p className="lista-vacia">No se identificaron temas.</p>
+          ) : (
+            <ul className="tema-list">
+              {temasFrecuentes.map((t) => (
+                <li key={t.nombre} className="tema-item">
+                  <div
+                    className="tema-chip"
+                    style={{
+                      '--w': `${(t.porcentaje / maxTema) * 100}%`,
+                    }}
+                  >
+                    <span>{formatearTema(t.nombre)}</span>
+                    <strong>{Math.round(t.porcentaje)}%</strong>
+                  </div>
+                  {t.descripcion && (
+                    <p className="tema-desc">{t.descripcion}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </ChartCard>
 
         <ChartCard title="Aspectos destacados" icon={Star}>
-          <ul className="check-list">
-            {ev.destacados.map((d) => (
-              <li key={d}>
-                <CircleCheck size={18} />
-                {d}
-              </li>
-            ))}
-          </ul>
+          {aspectosPositivos.length === 0 ? (
+            <p className="lista-vacia">
+              No se detectaron aspectos destacados.
+            </p>
+          ) : (
+            <ul className="check-list">
+              {aspectosPositivos.map((texto, i) => (
+                <li key={`${i}-${texto}`}>
+                  <CircleCheck size={18} />
+                  {texto}
+                </li>
+              ))}
+            </ul>
+          )}
         </ChartCard>
       </div>
 
       <div className="results-bottom">
-        <ChartCard title="Problemas detectados" icon={TriangleAlert} className="card-problems">
-          <ul className="problem-list">
-            {ev.problemas.map((p) => (
-              <li key={p}>{p}</li>
-            ))}
-          </ul>
+        <ChartCard
+          title="Problemas detectados"
+          icon={TriangleAlert}
+          className="card-problems"
+        >
+          {problemasDetectados.length === 0 ? (
+            <p className="lista-vacia">No se detectaron problemas.</p>
+          ) : (
+            <ul className="problem-list">
+              {problemasDetectados.map((texto, i) => (
+                <li key={`${i}-${texto}`}>{texto}</li>
+              ))}
+            </ul>
+          )}
         </ChartCard>
 
-        <ChartCard title="Recomendaciones de Gemini" icon={Lightbulb} className="card-reco">
-          <p className="reco-text">{ev.recomendacion}</p>
+        <ChartCard
+          title="Recomendaciones de Gemini"
+          icon={Lightbulb}
+          className="card-reco"
+        >
+          {recomendaciones.length === 0 ? (
+            <p className="lista-vacia">
+              No hay recomendaciones para este análisis.
+            </p>
+          ) : (
+            <ul className="reco-list">
+              {recomendaciones.map((texto, i) => (
+                <li key={`${i}-${texto}`}>{texto}</li>
+              ))}
+            </ul>
+          )}
         </ChartCard>
       </div>
     </div>
