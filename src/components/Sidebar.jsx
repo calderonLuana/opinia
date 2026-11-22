@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { House, Plus, ChartColumn, History, Sparkles } from 'lucide-react';
+import { House, Plus, ChartColumn, History, Sparkles, LogOut } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 
 const links = [
   { to: '/', label: 'Dashboard', icon: House, end: true },
@@ -9,6 +11,22 @@ const links = [
 ];
 
 function Sidebar() {
+  const { usuario, cerrarSesion } = useAuth();
+  const [saliendo, setSaliendo] = useState(false);
+
+  const correo = usuario?.email ?? '';
+  const inicial = correo.charAt(0).toUpperCase() || '?';
+
+  const handleCerrarSesion = async () => {
+    setSaliendo(true);
+    try {
+      await cerrarSesion();
+    } catch (error) {
+      console.error(error);
+      setSaliendo(false);
+    }
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
@@ -35,6 +53,24 @@ function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      <div className="sidebar-cuenta">
+        <div className="cuenta-datos">
+          <div className="avatar">{inicial}</div>
+          <div className="cuenta-email" title={correo}>
+            {correo}
+          </div>
+        </div>
+        <button
+          type="button"
+          className="btn-outline cuenta-salir"
+          onClick={handleCerrarSesion}
+          disabled={saliendo}
+        >
+          <LogOut size={16} />
+          Cerrar sesión
+        </button>
+      </div>
     </aside>
   );
 }

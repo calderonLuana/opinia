@@ -1,0 +1,142 @@
+/* ---------- Pantallas de acceso ---------- */
+.acceso {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.acceso-card {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 32px;
+  background-color: var(--fondo-panel);
+  border: 1px solid var(--borde);
+  border-radius: 16px;
+}
+
+.acceso-marca {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.acceso-card h1 {
+  font-size: 1.4rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.acceso-subtitulo {
+  margin-top: -8px;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--texto-secundario);
+}
+
+.acceso-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.acceso-ayuda {
+  font-size: 0.72rem;
+  color: var(--texto-secundario);
+}
+
+.acceso-boton {
+  width: 100%;
+  justify-content: center;
+}
+
+.acceso-enlaces {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.acceso-enlace {
+  background: none;
+  border: none;
+  color: var(--violeta-claro);
+  font-family: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.acceso-enlace:hover {
+  text-decoration: underline;
+}
+
+.acceso-cargando {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--texto-secundario);
+}
+
+/* ---------- Cuenta en el menú lateral ---------- */
+.sidebar-cuenta {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cuenta-datos {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cuenta-email {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cuenta-salir {
+  width: 100%;
+  justify-content: center;
+  padding: 9px 14px;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 900px) {
+  .sidebar-cuenta {
+    margin-top: 0;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .cuenta-email {
+    display: none;
+  }
+
+  .cuenta-salir {
+    width: auto;
+  }
+}
+
+@media (max-width: 700px) {
+  .sidebar-cuenta {
+    justify-content: space-between;
+  }
+
+  .cuenta-email {
+    display: block;
+    max-width: 55%;
+  }
+}
