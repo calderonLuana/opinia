@@ -1,0 +1,54 @@
+/* ---------- Historial: acciones ---------- */
+.history-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.confirmar-texto {
+  font-size: 0.8rem;
+  color: var(--texto-secundario);
+}
+
+.btn-icono {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: 1px solid var(--borde);
+  border-radius: 50%;
+  color: var(--texto-secundario);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.btn-icono:hover {
+  color: var(--negativo);
+  border-color: var(--negativo);
+}
+
+.btn-peligro {
+  padding: 8px 16px;
+  background-color: var(--negativo);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.btn-peligro:hover {
+  filter: brightness(1.1);
+}
+
+.btn-peligro:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

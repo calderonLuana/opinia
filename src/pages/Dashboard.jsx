@@ -9,17 +9,24 @@ import {
   Plus,
   ArrowRight,
   Presentation,
+  TriangleAlert,
 } from 'lucide-react';
 import StatCard from '../components/StatCard';
 import ChartCard from '../components/ChartCard';
 import SentimientosDonut from '../components/SentimientosDonut';
-import { resumen, sentimientos, ultimosAnalisis } from '../data/mockData';
+import { useAnalisis } from '../hooks/useAnalisis';
+import { calcularEstadisticas, formatearFecha } from '../utils/resultados';
 
 function Dashboard() {
+  const { analisis, cargando, error } = useAnalisis();
+  const estadisticas = calcularEstadisticas(analisis);
+  const ultimos = analisis.slice(0, 3);
+  const mostrar = (valor) => (cargando ? '—' : valor);
+
   return (
     <div className="page">
       <section className="hero">
-        <h1>¡Hola, Juan!</h1>
+        <h1>¡Bienvenido a OpinIA!</h1>
         <p>
           Descubrí qué opinan los asistentes de tus congresos y mejorá la
           experiencia en tus próximos eventos.
@@ -30,40 +37,52 @@ function Dashboard() {
         </Link>
       </section>
 
+      {error && (
+        <div className="aviso aviso-error" role="alert">
+          <TriangleAlert size={18} />
+          <div>
+            <span>{error}</span>
+          </div>
+        </div>
+      )}
+
       <div className="stat-grid">
         <StatCard
           icon={CalendarCheck}
-          value={resumen.analisis}
+          value={mostrar(estadisticas.totalAnalisis)}
           label="Análisis realizados"
-          trend={20}
           color="var(--lila)"
         />
         <StatCard
           icon={MessageCircle}
-          value={resumen.opiniones.toLocaleString('es-AR')}
+          value={mostrar(estadisticas.totalOpiniones.toLocaleString('es-AR'))}
           label="Opiniones procesadas"
-          trend={35}
           color="var(--neutro)"
         />
         <StatCard
           icon={Smile}
-          value={`${resumen.positivo}%`}
+          value={mostrar(`${estadisticas.positivo}%`)}
           label="Sentimiento positivo"
-          trend={8}
           color="var(--positivo)"
         />
         <StatCard
           icon={Frown}
-          value={`${resumen.negativo}%`}
+          value={mostrar(`${estadisticas.negativo}%`)}
           label="Sentimiento negativo"
-          trend={-5}
           color="var(--negativo)"
         />
       </div>
 
       <div className="dashboard-grid">
         <ChartCard title="Distribución de sentimientos" icon={ChartColumn}>
-          <SentimientosDonut data={sentimientos} />
+          {estadisticas.totalOpiniones > 0 ? (
+            <SentimientosDonut data={estadisticas.sentimientos} />
+          ) : (
+            <p className="lista-vacia">
+              Cuando realices tu primer análisis, acá vas a ver la distribución de
+              sentimientos.
+            </p>
+          )}
         </ChartCard>
 
         <ChartCard
@@ -75,25 +94,32 @@ function Dashboard() {
             </Link>
           }
         >
-          <ul className="analisis-list">
-            {ultimosAnalisis.map((a) => (
-              <li key={a.id} className="analisis-item">
-                <span className="analisis-icon">
-                  <Presentation size={18} />
-                </span>
-                <div className="analisis-info">
-                  <strong>{a.nombre}</strong>
-                  <span>{a.fecha}</span>
-                </div>
-                <span className="analisis-count">
-                  {a.opiniones.toLocaleString('es-AR')} opiniones
-                </span>
-                <Link to="/resultados" className="btn-small">
-                  Ver
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {ultimos.length === 0 ? (
+            <p className="lista-vacia">
+              Todavía no realizaste ningún análisis. Creá el primero con el botón
+              Nuevo análisis.
+            </p>
+          ) : (
+            <ul className="analisis-list">
+              {ultimos.map((a) => (
+                <li key={a.id} className="analisis-item">
+                  <span className="analisis-icon">
+                    <Presentation size={18} />
+                  </span>
+                  <div className="analisis-info">
+                    <strong>{a.evento.nombre}</strong>
+                    <span>{formatearFecha(a.evento.fecha)}</span>
+                  </div>
+                  <span className="analisis-count">
+                    {a.resumen.totalOpiniones.toLocaleString('es-AR')} opiniones
+                  </span>
+                  <Link to={`/resultados/${a.id}`} className="btn-small">
+                    Ver
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </ChartCard>
       </div>
     </div>

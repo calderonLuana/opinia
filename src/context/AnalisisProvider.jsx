@@ -1,59 +1,67 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import { AnalisisContext } from './analisisContext';
-
-const CLAVE_STORAGE = 'opinia.analisis';
-
-function cargarAnalisis() {
-  try {
-    const guardados = localStorage.getItem(CLAVE_STORAGE);
-    const lista = guardados ? JSON.parse(guardados) : [];
-    return Array.isArray(lista) ? lista : [];
-  } catch {
-    return [];
-  }
-}
-
-function generarId() {
-  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
-}
+import {
+  listarAnalisis,
+  obtenerAnalisisPorId,
+  guardarAnalisis,
+  eliminarAnalisisPorId,
+} from '../services/analisisService';
 
 export function AnalisisProvider({ children }) {
-  const [analisis, setAnalisis] = useState(cargarAnalisis);
+  const { usuario } = useAuth();
+  const usuarioId = usuario?.id ?? null;
+  const [estado, setEstado] = useState({ usuarioId: null, lista: [], error: '' });
 
   useEffect(() => {
-    try {
-      localStorage.setItem(CLAVE_STORAGE, JSON.stringify(analisis));
-    } catch {
-      console.warn('No se pudo guardar el historial en LocalStorage.');
-    }
-  }, [analisis]);
+    if (!usuarioId) return undefined;
+    let cancelado = false;
 
-  const agregarAnalisis = (datos) => {
-    const nuevo = {
-      ...datos,
-      id: generarId(),
-      creadoEn: new Date().toISOString(),
+    listarAnalisis()
+      .then((lista) => {
+        if (!cancelado) setEstado({ usuarioId, lista, error: '' });
+      })
+      .catch((err) => {
+        if (!cancelado) setEstado({ usuarioId, lista: [], error: err.message });
+      });
+
+    return () => {
+      cancelado = true;
     };
+  }, [usuarioId]);
 
-    setAnalisis((actuales) => [nuevo, ...actuales]);
-    return nuevo;
+  const vigente = usuarioId !== null && estado.usuarioId === usuarioId;
+  const analisis = vigente ? estado.lista : [];
+  const cargando = usuarioId !== null && !vigente;
+  const error = vigente ? estado.error : '';
+
+  const agregarAnalisis = async (resultado) => {
+    const guardado = await guardarAnalisis(resultado);
+    setEstado((previo) =>
+      previo.usuarioId === usuarioId
+        ? { ...previo, lista: [guardado, ...previo.lista] }
+        : previo,
+    );
+    return guardado;
   };
 
-  const obtenerAnalisis = (id) => {
-    return analisis.find((item) => item.id === id);
-  };
-
-  const eliminarAnalisis = (id) => {
-    setAnalisis((actuales) => actuales.filter((item) => item.id !== id));
+  const eliminarAnalisis = async (id) => {
+    await eliminarAnalisisPorId(id);
+    setEstado((previo) => ({
+      ...previo,
+      lista: previo.lista.filter((item) => item.id !== id),
+    }));
   };
 
   return (
     <AnalisisContext.Provider
       value={{
         analisis,
+        cargando,
+        error,
         agregarAnalisis,
-        obtenerAnalisis,
         eliminarAnalisis,
+        obtenerAnalisis: obtenerAnalisisPorId,
       }}
     >
       {children}

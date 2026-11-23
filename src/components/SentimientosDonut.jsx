@@ -1,4 +1,3 @@
-
 import { PieChart, Pie, Cell } from 'recharts';
 
 function SentimientosDonut({ data }) {
