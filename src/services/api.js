@@ -1,14 +1,31 @@
 
+import { supabase } from '../lib/supabase';
+
 const MENSAJE_SIN_CONEXION =
   'No se pudo conectar con el servidor. Verificá que el backend esté en ejecución.';
 
+async function obtenerToken() {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+
+  if (!token) {
+    throw new Error('Tu sesión venció. Iniciá sesión de nuevo.');
+  }
+
+  return token;
+}
+
 async function enviarJSON(ruta, datos, { tiempoMaximo, mensajeTiempo }) {
+  const token = await obtenerToken();
   let respuesta;
 
   try {
     respuesta = await fetch(ruta, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(datos),
       signal: AbortSignal.timeout(tiempoMaximo),
     });
