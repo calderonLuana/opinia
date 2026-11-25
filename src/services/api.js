@@ -33,22 +33,27 @@ async function enviarJSON(ruta, datos, { tiempoMaximo, mensajeTiempo }) {
     if (error.name === 'TimeoutError') {
       throw new Error(mensajeTiempo, { cause: error });
     }
+
     throw new Error(MENSAJE_SIN_CONEXION, { cause: error });
   }
 
   let cuerpo = null;
+
   try {
     cuerpo = await respuesta.json();
   } catch {
-    // La respuesta no trae JSON (por ejemplo, el backend está caído)
+    // La respuesta no trae JSON.
   }
 
   if (!respuesta.ok) {
     if (!cuerpo) {
       throw new Error(MENSAJE_SIN_CONEXION);
     }
+
     throw new Error(
-      cuerpo.detalles?.join(' ') || cuerpo.error || 'No se pudo completar la solicitud.',
+      cuerpo.detalles?.join(' ') ||
+        cuerpo.error ||
+        'No se pudo completar la solicitud.',
     );
   }
 
@@ -61,6 +66,7 @@ export async function analizarOpiniones(datos) {
     mensajeTiempo:
       'El análisis está tardando demasiado. Intentá de nuevo con menos opiniones.',
   });
+
   return cuerpo.resultado;
 }
 
@@ -70,8 +76,24 @@ export async function importarDesdeSheets(enlace) {
     { enlace },
     {
       tiempoMaximo: 30000,
-      mensajeTiempo: 'Google Sheets tardó demasiado en responder. Intentá de nuevo.',
+      mensajeTiempo:
+        'Google Sheets tardó demasiado en responder. Intentá de nuevo.',
     },
   );
+
   return cuerpo.csv;
+}
+
+export async function enviarInforme(idAnalisis) {
+  const cuerpo = await enviarJSON(
+    '/api/enviar-informe',
+    { idAnalisis },
+    {
+      tiempoMaximo: 30000,
+      mensajeTiempo:
+        'El envío del informe está tardando demasiado. Intentá de nuevo.',
+    },
+  );
+
+  return cuerpo;
 }

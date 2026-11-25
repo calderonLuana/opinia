@@ -1,8 +1,10 @@
+
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import analizarRouter from './routes/analizar.js';
 import importarRouter from './routes/importar.js';
+import enviarInformeRouter from './routes/enviarInforme.js';
 import { requerirSesion } from './middleware/requerirSesion.js';
 
 const app = express();
@@ -28,6 +30,7 @@ app.get('/api/health', (req, res) => {
 // Protegidas: requieren una sesión iniciada
 app.use('/api/analizar', requerirSesion, analizarRouter);
 app.use('/api/importar-sheets', requerirSesion, importarRouter);
+app.use('/api/enviar-informe', requerirSesion, enviarInformeRouter);
 
 // Rutas inexistentes
 app.use((req, res) => {
